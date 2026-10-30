@@ -430,6 +430,17 @@ func (a *App) RestartServer(serverID string) error {
 	})
 }
 
+// DiagnoseServer runs read-only checks on the server over SSH.
+func (a *App) DiagnoseServer(serverID string) (string, error) {
+	var output string
+	err := a.withSSH(serverID, 2*time.Minute, func(ctx context.Context, client *sshx.Client, _ profile.Server) error {
+		var err error
+		output, err = admin.Diagnose(ctx, client)
+		return err
+	})
+	return output, err
+}
+
 func (a *App) DeployServer(serverID string, mode string) error {
 	go func() {
 		err := a.withSSH(serverID, 20*time.Minute, func(ctx context.Context, client *sshx.Client, server profile.Server) error {

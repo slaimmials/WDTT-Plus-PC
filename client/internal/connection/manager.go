@@ -138,7 +138,7 @@ func (m *Manager) Connect(p profile.Profile, settings profile.Settings) error {
 			if p.Mode == profile.ModeHTTP {
 				scheme = "http"
 			}
-			go m.checkInternet(proxyCheckClient(scheme, cfg.Proxy.Listen, p.Proxy.Username, p.Proxy.Password))
+			go m.checkInternet(proxyCheckClient(scheme, cfg.Proxy.Listen, p.Proxy.Username, p.Proxy.Password), nil)
 		},
 		SolveCaptcha: func(ctx context.Context, request core.CaptchaRequest) (string, error) {
 			log.Printf("[КАПЧА] VK просит подтвердить, что вы не робот")
@@ -209,7 +209,7 @@ func (m *Manager) startTunnel(config string, rules profile.Routing) error {
 		s.ConnectedAt = time.Now().UnixMilli()
 		s.Warning = t.Warning
 	})
-	go m.checkInternet(vpnCheckClient(wg.DNS))
+	go m.checkInternet(vpnCheckClient(wg.DNS), t.PeerStats)
 	return nil
 }
 

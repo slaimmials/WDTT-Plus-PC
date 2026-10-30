@@ -1,10 +1,13 @@
 package connection
 
 import (
+	"strings"
+
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"wdtt-plus/client/internal/tunnel"
 )
 
 func TestFetchTrace(t *testing.T) {
@@ -27,5 +30,21 @@ func TestFetchTraceRejectsUnexpectedBody(t *testing.T) {
 
 	if _, _, err := fetchTrace(server.Client(), server.URL); err == nil {
 		t.Fatal("expected error for a page without trace fields")
+	}
+}
+
+func TestDiagnoseLoss(t *testing.T) {
+	cases := []struct {
+		before, after tunnel.PeerStats
+		want          string
+	}{
+		{tunnel.PeerStats{TxBytes: 100}, tunnel.PeerStats{TxBytes: 100}, "не попадает в туннель"},
+		{tunnel.PeerStats{}, tunnel.PeerStats{TxBytes: 4000, RxBytes: 92}, "сервер не отвечает"},
+		{tunnel.PeerStats{}, tunnel.PeerStats{TxBytes: 4000, RxBytes: 9000}, "не доходят до программ"},
+	}
+	for _, c := range cases {
+		if got := diagnoseLoss(c.before, c.after); !strings.Contains(got, c.want) {
+			t.Errorf("got %q, want substring %q", got, c.want)
+		}
 	}
 }

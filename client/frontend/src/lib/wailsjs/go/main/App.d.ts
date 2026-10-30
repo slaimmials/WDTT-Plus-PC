@@ -20,6 +20,8 @@ export function DeleteServer(arg1:string):Promise<void>;
 
 export function DeployServer(arg1:string,arg2:string):Promise<void>;
 
+export function DiagnoseServer(arg1:string):Promise<string>;
+
 export function Disconnect():Promise<void>;
 
 export function GetLogs():Promise<Array<applog.Entry>>;

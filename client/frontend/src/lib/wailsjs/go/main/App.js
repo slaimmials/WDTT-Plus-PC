@@ -34,6 +34,10 @@ export function DeployServer(arg1, arg2) {
   return window['go']['main']['App']['DeployServer'](arg1, arg2);
 }
 
+export function DiagnoseServer(arg1) {
+  return window['go']['main']['App']['DiagnoseServer'](arg1);
+}
+
 export function Disconnect() {
   return window['go']['main']['App']['Disconnect']();
 }
