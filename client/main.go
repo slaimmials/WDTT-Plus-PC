@@ -17,6 +17,13 @@ import (
 	"wdtt-plus/client/internal/profile"
 )
 
+type ignoreErrors struct{ w io.Writer }
+
+func (i ignoreErrors) Write(p []byte) (int, error) {
+	_, _ = i.w.Write(p)
+	return len(p), nil
+}
+
 // version is set at build time with -ldflags "-X main.version=...".
 var version = "dev"
 
@@ -30,7 +37,9 @@ func main() {
 	}
 	logs := applog.Open(dataDir)
 	defer logs.Close()
-	log.SetOutput(io.MultiWriter(os.Stderr, logs))
+	// A Windows GUI process has no console: writes to stderr fail, and
+	// io.MultiWriter would stop before reaching the log.
+	log.SetOutput(io.MultiWriter(logs, ignoreErrors{os.Stderr}))
 	log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds)
 	log.Printf("[СИСТЕМА] WDTT Plus %s", version)
 

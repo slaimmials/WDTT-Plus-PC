@@ -212,6 +212,17 @@
           Отключено
         {/if}
       </div>
+      {#if status.state === 'connected' && status.internet.state}
+        <div class="internet {status.internet.state}">
+          {#if status.internet.state === 'checking'}
+            Проверяем доступ в интернет…
+          {:else if status.internet.state === 'ok'}
+            Интернет работает · IP {status.internet.ip}{status.internet.country ? ` (${status.internet.country})` : ''}
+          {:else}
+            {status.internet.message}
+          {/if}
+        </div>
+      {/if}
 
       {#if status.state === 'connected' || status.state === 'connecting'}
         <div class="stats">
@@ -361,6 +372,9 @@
   .power.connected { border-color: var(--success); color: var(--success); }
   .power.connecting, .power.disconnecting { border-color: var(--warning); color: var(--warning); }
   .state { font-size: 15px; }
+  .internet { font-size: 13px; color: var(--muted); text-align: center; max-width: 360px; }
+  .internet.ok { color: var(--success); }
+  .internet.failed { color: var(--danger); }
   .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; text-align: center; }
   .stats > div { display: flex; flex-direction: column; }
   .proxy { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }

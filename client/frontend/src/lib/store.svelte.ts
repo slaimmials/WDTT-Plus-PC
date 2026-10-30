@@ -29,7 +29,7 @@ class Store {
     diagnostics: false,
   });
   status = $state<Status>({
-    state: 'disconnected', profileId: '', mode: '', error: '', warning: '', proxyAddresses: null,
+    state: 'disconnected', profileId: '', mode: '', error: '', warning: '', internet: { state: '', ip: '', country: '', message: '' }, proxyAddresses: null,
     stats: { ActiveConnections: 0, BytesUp: 0, BytesDown: 0, LatencyMs: 0 }, connectedAt: 0,
   });
   speed = $state({ up: 0, down: 0 });

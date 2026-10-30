@@ -6,12 +6,14 @@ import (
 	"log"
 	"net/netip"
 
+	"wdtt-plus/client/internal/core"
+	"wdtt-plus/client/internal/firewall"
+
 	"golang.org/x/sys/windows"
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/tun"
 	"golang.zx2c4.com/wireguard/windows/tunnel/winipcfg"
-	"wdtt-plus/client/internal/firewall"
 )
 
 const adapterName = "WDTT Plus"
@@ -68,13 +70,7 @@ func Start(opts Options) (_ *Tunnel, err error) {
 		t.binder.setTunnel(t.luid)
 	}
 
-	logger := &device.Logger{
-		Verbosef: device.DiscardLogf,
-		Errorf: func(format string, args ...any) {
-			log.Printf("[WIREGUARD] "+format, args...)
-		},
-	}
-	t.device = device.NewDevice(tunDevice, conn.NewStdNetBind(), logger)
+	t.device = device.NewDevice(tunDevice, conn.NewStdNetBind(), core.WireGuardLogger("[WIREGUARD] "))
 	defer func() {
 		if err != nil {
 			t.Close()
