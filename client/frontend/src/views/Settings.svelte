@@ -35,11 +35,20 @@
 
   <div class="card stack">
     <h2>Получение доступа к VK</h2>
-    <Toggle
-      bind:checked={vk.vkCallsPreflight}
-      label="Сначала VK Calls API"
-      hint="Современный способ, который обычно обходится без капчи."
-    />
+    <div class="stack">
+      <span class="muted small">Способ получения доступа к TURN</span>
+      <Segmented
+        bind:value={vk.vkCallsPreflight}
+        options={[
+          { value: true, label: 'Быстрый (VK Calls)' },
+          { value: false, label: 'Стандартный' },
+        ]}
+      />
+      <span class="muted small">
+        Быстрый обычно обходится без капчи. Стандартный — старый способ через приложения VK, иногда с капчей;
+        пригодится, если быстрый перестал выдавать доступ.
+      </span>
+    </div>
     <Toggle
       bind:checked={vk.hashFallback}
       label="Резервные хеши"

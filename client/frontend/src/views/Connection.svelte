@@ -202,7 +202,9 @@
         >
       </div>
       <div class="state">
-        {#if status.state === 'connected'}
+        {#if status.state === 'connected' && status.reconnecting}
+          Каналы потеряны, переподключение…
+        {:else if status.state === 'connected'}
           Подключено · {duration(now - status.connectedAt)}
         {:else if status.state === 'connecting'}
           Подключение…
