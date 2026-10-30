@@ -1,4 +1,4 @@
-<script lang="ts" generics="T extends string">
+<script lang="ts" generics="T extends string | boolean">
   let { value = $bindable(), options, onchange }: {
     value: T;
     options: { value: T; label: string }[];
@@ -7,7 +7,7 @@
 </script>
 
 <div class="segmented" role="radiogroup">
-  {#each options as option (option.value)}
+  {#each options as option (String(option.value))}
     <button
       role="radio"
       aria-checked={value === option.value}

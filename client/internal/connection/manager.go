@@ -39,6 +39,7 @@ type Status struct {
 	Error          string        `json:"error"`
 	Warning        string        `json:"warning"`
 	Internet       InternetCheck `json:"internet"`
+	Reconnecting   bool          `json:"reconnecting"`
 	ProxyAddresses []string      `json:"proxyAddresses"`
 	Stats          core.Stats    `json:"stats"`
 	ConnectedAt    int64         `json:"connectedAt"`
@@ -54,11 +55,12 @@ type Manager struct {
 	onStatus   func(Status)
 	captcha    CaptchaSolver
 
-	mu      sync.Mutex
-	status  Status
-	session *core.Session
-	tunnel  *tunnel.Tunnel
-	binder  *tunnel.Binder
+	mu         sync.Mutex
+	status     Status
+	session    *core.Session
+	tunnel     *tunnel.Tunnel
+	binder     *tunnel.Binder
+	recoveries int
 }
 
 func NewManager(dataDir, appVersion string, captcha CaptchaSolver, onStatus func(Status)) *Manager {
@@ -106,6 +108,7 @@ func (m *Manager) Connect(p profile.Profile, settings profile.Settings) error {
 		return errors.New("подключение уже активно")
 	}
 	m.status = Status{State: Connecting, ProfileID: p.ID, Mode: string(p.Mode)}
+	m.recoveries = 0
 	status := m.status
 	m.mu.Unlock()
 	m.emit(status)
@@ -126,8 +129,16 @@ func (m *Manager) Connect(p profile.Profile, settings profile.Settings) error {
 
 	hooks := core.Hooks{
 		OnStats: func(stats core.Stats) {
-			m.update(func(s *Status) { s.Stats = stats })
+			m.update(func(s *Status) {
+				s.Stats = stats
+				if s.Reconnecting && stats.ActiveConnections > 0 {
+					s.Reconnecting = false
+					m.recoveries = 0
+					log.Printf("[ПОДКЛЮЧЕНИЕ] Каналы восстановлены")
+				}
+			})
 		},
+		OnPaused: m.recover,
 		OnProxyReady: func(addresses []string) {
 			m.update(func(s *Status) {
 				s.State = Connected
@@ -170,6 +181,40 @@ func (m *Manager) Connect(p profile.Profile, settings profile.Settings) error {
 	m.mu.Unlock()
 	go m.wait(session)
 	return nil
+}
+
+// recoveryDelays space out automatic reconnection after every channel failed.
+var recoveryDelays = []time.Duration{3 * time.Second, 10 * time.Second, 30 * time.Second, time.Minute}
+
+// recover resumes a transport that stopped retrying. The most common cause is
+// another device connecting with the same password: the server keeps one
+// active session per password and closes the previous one.
+func (m *Manager) recover() {
+	m.mu.Lock()
+	session := m.session
+	attempt := m.recoveries
+	m.recoveries++
+	m.mu.Unlock()
+	if session == nil {
+		return
+	}
+	delay := recoveryDelays[min(attempt, len(recoveryDelays)-1)]
+	log.Printf("[ПОДКЛЮЧЕНИЕ] Все каналы потеряны, переподключаюсь через %d с", int(delay.Seconds()))
+	m.update(func(s *Status) {
+		s.Reconnecting = true
+		if attempt == 0 {
+			s.Warning = "сервер закрыл все каналы. Если этот же пароль используется на другом устройстве, " +
+				"сервер отключает предыдущее — создайте для компьютера отдельного клиента."
+		}
+	})
+	select {
+	case <-time.After(delay):
+	case <-session.Done():
+		return
+	}
+	if m.currentSession() == session {
+		session.NetworkChanged()
+	}
 }
 
 func (m *Manager) startTunnel(config string, rules profile.Routing) error {

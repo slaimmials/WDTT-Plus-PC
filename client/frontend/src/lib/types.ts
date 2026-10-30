@@ -98,6 +98,7 @@ export interface Status {
   error: string;
   warning: string;
   internet: InternetCheck;
+  reconnecting: boolean;
   proxyAddresses: string[] | null;
   stats: Stats;
   connectedAt: number;

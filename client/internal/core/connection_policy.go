@@ -51,6 +51,8 @@ type connectionPolicy struct {
 	probes                    map[*connectionLease]struct{}
 	readyPaths                map[string]int
 	readyKinds                map[string]int
+	// onPause is called when every path failed and attempts stopped.
+	onPause func()
 }
 
 func newConnectionPolicy(preferred string, noUDP bool) *connectionPolicy {
@@ -248,6 +250,9 @@ func (a *connectionPolicy) acquire(ctx context.Context, paths []connectionPath) 
 		if a.failures >= connectionAttemptBudget && a.active == 0 && !a.paused {
 			a.paused = true
 			log.Print("[CONNECTION] PAUSED Лимит попыток исчерпан. Смените сеть или подключитесь заново.")
+			if a.onPause != nil {
+				go a.onPause()
+			}
 		}
 		if !a.blocked && !a.sleeping && !a.paused && a.pending < limit && !now.Before(a.next) {
 			if index >= 0 {

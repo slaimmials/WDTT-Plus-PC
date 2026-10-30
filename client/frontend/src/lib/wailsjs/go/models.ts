@@ -46,6 +46,7 @@ export namespace connection {
 	    error: string;
 	    warning: string;
 	    internet: InternetCheck;
+	    reconnecting: boolean;
 	    proxyAddresses: string[];
 	    stats: core.Stats;
 	    connectedAt: number;
@@ -62,6 +63,7 @@ export namespace connection {
 	        this.error = source["error"];
 	        this.warning = source["warning"];
 	        this.internet = this.convertValues(source["internet"], InternetCheck);
+	        this.reconnecting = source["reconnecting"];
 	        this.proxyAddresses = source["proxyAddresses"];
 	        this.stats = this.convertValues(source["stats"], core.Stats);
 	        this.connectedAt = source["connectedAt"];

@@ -115,6 +115,9 @@ type Hooks struct {
 	// OnProxyReady reports the addresses the local proxy listens on.
 	OnProxyReady func(addresses []string)
 	OnStats      func(Stats)
+	// OnPaused reports that every channel failed and the transport stopped
+	// retrying; Session.NetworkChanged resumes it.
+	OnPaused func()
 	// SolveCaptcha shows the VK captcha to the user and returns success_token.
 	SolveCaptcha func(ctx context.Context, request CaptchaRequest) (string, error)
 }
@@ -301,6 +304,9 @@ func (s *Session) run(ctx context.Context, cfg Config, hooks Hooks) error {
 	}
 
 	s.policy.configure("", cfg.StreamOnly)
+	s.policy.mu.Lock()
+	s.policy.onPause = hooks.OnPaused
+	s.policy.mu.Unlock()
 	tp := &TurnParams{
 		Experiment:  experimentAuto,
 		Host:        cfg.TURNHost,
