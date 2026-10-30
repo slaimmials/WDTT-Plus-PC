@@ -58,6 +58,10 @@ export function ParseLink(arg1) {
   return window['go']['main']['App']['ParseLink'](arg1);
 }
 
+export function PingProfiles(arg1) {
+  return window['go']['main']['App']['PingProfiles'](arg1);
+}
+
 export function ProfileLink(arg1) {
   return window['go']['main']['App']['ProfileLink'](arg1);
 }

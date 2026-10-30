@@ -963,6 +963,7 @@ func RunSession(
 	var lastServerRxAt atomic.Int64
 	lastServerRxAt.Store(time.Now().UnixNano())
 	var keepalivePongSeen atomic.Int32
+	var keepaliveSentAt atomic.Int64
 	policyLimitCh := make(chan int, 1)
 	var dtlsWriteMu sync.Mutex
 
@@ -975,6 +976,9 @@ func RunSession(
 		defer dtlsWriteMu.Unlock()
 		_ = dtlsConn.SetWriteDeadline(now.Add(5 * time.Second))
 		_, err := dtlsConn.Write(ping)
+		if err == nil {
+			keepaliveSentAt.CompareAndSwap(0, now.UnixNano())
+		}
 		return err == nil
 	}
 
@@ -1122,6 +1126,9 @@ func RunSession(
 		defer sessCancel()
 		var reportedWakeGeneration uint64
 		noteKeepalivePong := func() {
+			if sent := keepaliveSentAt.Swap(0); sent > 0 {
+				stats.noteLatency(time.Since(time.Unix(0, sent)))
+			}
 			generation := d.wakeGeneration.Load()
 			if generation > 0 {
 				d.acknowledgeWorkerWake(slot, generation)

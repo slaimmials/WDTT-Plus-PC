@@ -306,6 +306,27 @@ func (m *Manager) ensureBinder() (*tunnel.Binder, error) {
 	return binder, nil
 }
 
+// Probe measures the round trip through VK TURN to the profile's server.
+// It cannot run while a connection is active.
+func (m *Manager) Probe(ctx context.Context, p profile.Profile, settings profile.Settings) (time.Duration, error) {
+	if err := p.Validate(); err != nil {
+		return 0, err
+	}
+	if m.Status().State != Disconnected {
+		return 0, errors.New("отключитесь, чтобы проверить другой профиль")
+	}
+	cfg, err := m.coreConfig(p, settings)
+	if err != nil {
+		return 0, err
+	}
+	cfg.Proxy = core.ProxyConfig{}
+	return core.Probe(ctx, cfg, core.Hooks{
+		SolveCaptcha: func(ctx context.Context, request core.CaptchaRequest) (string, error) {
+			return m.captcha(ctx, request.RedirectURI)
+		},
+	})
+}
+
 // CheckHashes reports for every hash whether VK issues TURN credentials.
 func (m *Manager) CheckHashes(ctx context.Context, hashes []string, settings profile.Settings, report func(int, core.HashCheckResult)) error {
 	cfg := core.Config{Hashes: hashes}

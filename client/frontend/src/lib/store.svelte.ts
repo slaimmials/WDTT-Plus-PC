@@ -1,5 +1,5 @@
 import { api, events, errorText } from './api';
-import type { LogEntry, Profile, Settings, Status } from './types';
+import type { LogEntry, PingResult, Profile, Settings, Status } from './types';
 
 const MAX_LOGS = 3000;
 
@@ -30,13 +30,14 @@ class Store {
   });
   status = $state<Status>({
     state: 'disconnected', profileId: '', mode: '', error: '', proxyAddresses: null,
-    stats: { ActiveConnections: 0, BytesUp: 0, BytesDown: 0 }, connectedAt: 0,
+    stats: { ActiveConnections: 0, BytesUp: 0, BytesDown: 0, LatencyMs: 0 }, connectedAt: 0,
   });
   speed = $state({ up: 0, down: 0 });
   logs = $state<LogEntry[]>([]);
   toasts = $state<Toast[]>([]);
   incomingLink = $state('');
   dialog = $state<Dialog | null>(null);
+  pings = $state<Record<string, PingResult>>({});
 
   activeProfile = $derived<Profile | undefined>(
     this.settings.profiles.find((p) => p.id === this.settings.activeProfile) ?? this.settings.profiles[0],
@@ -57,6 +58,7 @@ class Store {
     events.settings((s) => (this.settings = s));
     events.status((s) => this.applyStatus(s));
     events.link((link) => (this.incomingLink = link));
+    events.ping(({ profileId, ...result }) => (this.pings[profileId] = result));
     events.log((entry) => {
       this.logs.push(entry);
       if (this.logs.length > MAX_LOGS) this.logs.splice(0, this.logs.length - MAX_LOGS);

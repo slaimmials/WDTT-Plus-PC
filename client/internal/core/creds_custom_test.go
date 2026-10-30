@@ -78,3 +78,18 @@ func TestCredentialCacheLifetime(t *testing.T) {
 		})
 	}
 }
+
+func TestEmptyCustomVKCredentialsUseBuiltInClients(t *testing.T) {
+	original := customVKCredentials
+	t.Cleanup(func() { customVKCredentials = original })
+
+	if err := SetCustomVKCredentials("12345678", "secret"); err != nil {
+		t.Fatal(err)
+	}
+	if err := SetCustomVKCredentials("", " "); err != nil {
+		t.Fatalf("empty credentials must be accepted: %v", err)
+	}
+	if customVKCredentials != nil {
+		t.Fatal("empty credentials must remove the custom provider")
+	}
+}

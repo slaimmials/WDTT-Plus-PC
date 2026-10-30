@@ -75,6 +75,13 @@ export interface Stats {
   ActiveConnections: number;
   BytesUp: number;
   BytesDown: number;
+  LatencyMs: number;
+}
+
+export interface PingResult {
+  testing?: boolean;
+  latencyMs?: number;
+  error?: string;
 }
 
 export interface Status {

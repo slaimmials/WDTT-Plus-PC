@@ -36,6 +36,7 @@ const (
 	eventHash     = "hash-check"
 	eventDeploy   = "deploy"
 	eventSettings = "settings"
+	eventPing     = "ping"
 )
 
 // App is the Wails-bound backend. Exported methods are callable from the UI.
@@ -260,6 +261,37 @@ func (a *App) CheckHashes(hashes []string) error {
 	return nil
 }
 
+// PingProfiles checks the given profiles one by one and reports each result
+// with a "ping" event.
+func (a *App) PingProfiles(ids []string) error {
+	if a.manager.Status().State != connection.Disconnected {
+		return errors.New("отключитесь, чтобы проверить профили")
+	}
+	settings := a.snapshot()
+	go func() {
+		for _, id := range ids {
+			p, ok := settings.Profile(id)
+			if !ok {
+				continue
+			}
+			a.emit(eventPing, map[string]any{"profileId": id, "testing": true})
+			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+			rtt, err := a.manager.Probe(ctx, *p, settings)
+			cancel()
+			result := map[string]any{"profileId": id}
+			if err != nil {
+				log.Printf("[ПИНГ] %s: %v", p.Name, err)
+				result["error"] = err.Error()
+			} else {
+				log.Printf("[ПИНГ] %s: %d мс", p.Name, rtt.Milliseconds())
+				result["latencyMs"] = max(1, rtt.Milliseconds())
+			}
+			a.emit(eventPing, result)
+		}
+	}()
+	return nil
+}
+
 // Settings
 
 func (a *App) SaveRouting(r profile.Routing) error {
@@ -289,7 +321,7 @@ func (a *App) ValidateRule(rule string) string {
 }
 
 func (a *App) SaveVK(vk profile.VK) error {
-	if err := core.SetCustomVKCredentials(vk.CustomClientID, vk.CustomSecret); err != nil {
+	if err := core.ValidateCustomVKCredentials(vk.CustomClientID, vk.CustomSecret); err != nil {
 		return err
 	}
 	return a.modify(func(s *profile.Settings) error {

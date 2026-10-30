@@ -105,6 +105,8 @@ type Stats struct {
 	ActiveConnections int32
 	BytesUp           int64
 	BytesDown         int64
+	// LatencyMs is the round trip through VK TURN to the server, 0 if unknown.
+	LatencyMs int64
 }
 
 type Hooks struct {
