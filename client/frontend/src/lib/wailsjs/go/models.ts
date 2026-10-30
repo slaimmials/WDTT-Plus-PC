@@ -21,12 +21,31 @@ export namespace applog {
 
 export namespace connection {
 	
+	export class InternetCheck {
+	    state: string;
+	    ip: string;
+	    country: string;
+	    message: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new InternetCheck(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.state = source["state"];
+	        this.ip = source["ip"];
+	        this.country = source["country"];
+	        this.message = source["message"];
+	    }
+	}
 	export class Status {
 	    state: string;
 	    profileId: string;
 	    mode: string;
 	    error: string;
 	    warning: string;
+	    internet: InternetCheck;
 	    proxyAddresses: string[];
 	    stats: core.Stats;
 	    connectedAt: number;
@@ -42,6 +61,7 @@ export namespace connection {
 	        this.mode = source["mode"];
 	        this.error = source["error"];
 	        this.warning = source["warning"];
+	        this.internet = this.convertValues(source["internet"], InternetCheck);
 	        this.proxyAddresses = source["proxyAddresses"];
 	        this.stats = this.convertValues(source["stats"], core.Stats);
 	        this.connectedAt = source["connectedAt"];

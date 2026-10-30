@@ -179,7 +179,7 @@ func startSocksWireGuard(rawConfig string) (*device.Device, *netstack.Net, error
 	wgDevice := device.NewDevice(
 		tunDevice,
 		conn.NewDefaultBind(),
-		device.NewLogger(device.LogLevelError, "[WG-SOCKS] "),
+		WireGuardLogger("[WIREGUARD] "),
 	)
 	if err := wgDevice.IpcSet(config.ipcRequest()); err != nil {
 		wgDevice.Close()

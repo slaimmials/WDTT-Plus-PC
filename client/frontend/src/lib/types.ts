@@ -84,12 +84,20 @@ export interface PingResult {
   error?: string;
 }
 
+export interface InternetCheck {
+  state: '' | 'checking' | 'ok' | 'failed';
+  ip: string;
+  country: string;
+  message: string;
+}
+
 export interface Status {
   state: ConnectionState;
   profileId: string;
   mode: Mode | '';
   error: string;
   warning: string;
+  internet: InternetCheck;
   proxyAddresses: string[] | null;
   stats: Stats;
   connectedAt: number;
