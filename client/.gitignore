@@ -1,0 +1,6 @@
+build/bin/
+build/cache/
+build/windows/
+frontend/dist/
+internal/deploy/assets/wdtt-server-*
+internal/tunnel/wintun/*.dll

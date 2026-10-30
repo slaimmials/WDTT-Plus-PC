@@ -1,0 +1,70 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: client/go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Server tests
+        working-directory: server
+        run: go test ./...
+      - name: Frontend
+        working-directory: client/frontend
+        run: |
+          npm ci
+          npm run check
+          npm run build
+      - name: Client tests
+        working-directory: client
+        run: |
+          go vet ./...
+          GOOS=windows go vet ./...
+          go test ./...
+      - name: Installer contract
+        run: |
+          bash server-installer/tests/version_sync_test.sh
+          bash server-installer/tests/compatibility_test.sh
+
+  windows:
+    needs: test
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: client/go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Wails
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.17.0
+      - name: Build
+        run: client/scripts/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wdtt-plus-windows
+          path: dist/*.exe
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.exe
