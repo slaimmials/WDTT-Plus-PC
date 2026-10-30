@@ -29,7 +29,7 @@ class Store {
     diagnostics: false,
   });
   status = $state<Status>({
-    state: 'disconnected', profileId: '', mode: '', error: '', proxyAddresses: null,
+    state: 'disconnected', profileId: '', mode: '', error: '', warning: '', proxyAddresses: null,
     stats: { ActiveConnections: 0, BytesUp: 0, BytesDown: 0, LatencyMs: 0 }, connectedAt: 0,
   });
   speed = $state({ up: 0, down: 0 });
@@ -81,6 +81,7 @@ class Store {
     }
     this.lastStats = { at: now, up: s.stats.BytesUp, down: s.stats.BytesDown };
     if (s.error && s.error !== this.status.error) this.notify(s.error, 'error');
+    if (s.warning && s.warning !== this.status.warning) this.notify(s.warning, 'error');
     this.status = s;
   }
 

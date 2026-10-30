@@ -37,6 +37,7 @@ type Status struct {
 	ProfileID      string     `json:"profileId"`
 	Mode           string     `json:"mode"`
 	Error          string     `json:"error"`
+	Warning        string     `json:"warning"`
 	ProxyAddresses []string   `json:"proxyAddresses"`
 	Stats          core.Stats `json:"stats"`
 	ConnectedAt    int64      `json:"connectedAt"`
@@ -200,6 +201,7 @@ func (m *Manager) startTunnel(config string, rules profile.Routing) error {
 	m.update(func(s *Status) {
 		s.State = Connected
 		s.ConnectedAt = time.Now().UnixMilli()
+		s.Warning = t.Warning
 	})
 	return nil
 }

@@ -26,6 +26,7 @@ export namespace connection {
 	    profileId: string;
 	    mode: string;
 	    error: string;
+	    warning: string;
 	    proxyAddresses: string[];
 	    stats: core.Stats;
 	    connectedAt: number;
@@ -40,6 +41,7 @@ export namespace connection {
 	        this.profileId = source["profileId"];
 	        this.mode = source["mode"];
 	        this.error = source["error"];
+	        this.warning = source["warning"];
 	        this.proxyAddresses = source["proxyAddresses"];
 	        this.stats = this.convertValues(source["stats"], core.Stats);
 	        this.connectedAt = source["connectedAt"];
