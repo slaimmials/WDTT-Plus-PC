@@ -10,8 +10,8 @@ import (
 	"golang.zx2c4.com/wireguard/conn"
 	"golang.zx2c4.com/wireguard/device"
 	"golang.zx2c4.com/wireguard/tun"
-	"golang.zx2c4.com/wireguard/windows/tunnel/firewall"
 	"golang.zx2c4.com/wireguard/windows/tunnel/winipcfg"
+	"wdtt-plus/client/internal/firewall"
 )
 
 const adapterName = "WDTT Plus"
@@ -41,6 +41,9 @@ type Options struct {
 }
 
 type Tunnel struct {
+	// Warning describes a non-fatal setup problem shown to the user.
+	Warning string
+
 	device   *device.Device
 	luid     winipcfg.LUID
 	binder   *Binder
@@ -87,10 +90,12 @@ func Start(opts Options) (_ *Tunnel, err error) {
 		return nil, err
 	}
 	if opts.KillSwitch {
-		if err = firewall.EnableFirewall(uint64(t.luid), false, opts.Config.DNS); err != nil {
-			return nil, fmt.Errorf("защита от утечек: %w", err)
+		if fwErr := firewall.EnableFirewall(uint64(t.luid), false, opts.Config.DNS); fwErr != nil {
+			t.Warning = fmt.Sprintf("защита от утечек не включилась: %v", fwErr)
+			log.Printf("[VPN] %s", t.Warning)
+		} else {
+			t.firewall = true
 		}
-		t.firewall = true
 	}
 	return t, nil
 }

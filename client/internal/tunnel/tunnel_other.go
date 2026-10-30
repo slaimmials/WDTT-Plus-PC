@@ -25,7 +25,7 @@ type Options struct {
 	Binder     *Binder
 }
 
-type Tunnel struct{}
+type Tunnel struct{ Warning string }
 
 func Start(Options) (*Tunnel, error) { return nil, errUnsupported }
 

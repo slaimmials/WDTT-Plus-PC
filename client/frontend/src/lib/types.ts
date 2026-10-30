@@ -89,6 +89,7 @@ export interface Status {
   profileId: string;
   mode: Mode | '';
   error: string;
+  warning: string;
   proxyAddresses: string[] | null;
   stats: Stats;
   connectedAt: number;
