@@ -31,8 +31,9 @@ type Binder struct {
 // NewBinder starts watching default routes; onChange is called when the
 // physical default interface changes.
 func NewBinder(onChange func()) (*Binder, error) {
-	b := &Binder{onChange: onChange}
+	b := &Binder{}
 	b.refresh()
+	b.onChange = onChange
 	routes, err := winipcfg.RegisterRouteChangeCallback(func(_ winipcfg.MibNotificationType, route *winipcfg.MibIPforwardRow2) {
 		if route != nil && route.DestinationPrefix.PrefixLength == 0 {
 			b.refresh()

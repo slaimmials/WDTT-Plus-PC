@@ -70,7 +70,7 @@ func Start(opts Options) (_ *Tunnel, err error) {
 		t.binder.setTunnel(t.luid)
 	}
 
-	t.device = device.NewDevice(tunDevice, conn.NewStdNetBind(), core.WireGuardLogger("[WIREGUARD] "))
+	t.device = device.NewDevice(&packetLogDevice{Device: tunDevice}, conn.NewStdNetBind(), core.WireGuardLogger("[WIREGUARD] "))
 	defer func() {
 		if err != nil {
 			t.Close()
@@ -96,6 +96,9 @@ func Start(opts Options) (_ *Tunnel, err error) {
 	return t, nil
 }
 
+// configureInterface follows wireguard-windows: routes, then addresses, then
+// interface parameters with duplicate address detection disabled. With DAD
+// enabled Windows keeps the address tentative and drops inbound packets.
 func (t *Tunnel) configureInterface(opts Options) error {
 	var addresses []netip.Prefix
 	for _, prefix := range opts.Config.Addresses {
@@ -105,9 +108,6 @@ func (t *Tunnel) configureInterface(opts Options) error {
 	}
 	if len(addresses) == 0 {
 		return errors.New("сервер не выдал IPv4-адрес туннеля")
-	}
-	if err := t.luid.SetIPAddressesForFamily(windows.AF_INET, addresses); err != nil {
-		return fmt.Errorf("адрес адаптера: %w", err)
 	}
 
 	routes := make([]*winipcfg.RouteData, 0, len(opts.Routes))
@@ -120,11 +120,18 @@ func (t *Tunnel) configureInterface(opts Options) error {
 	if err := t.luid.SetRoutesForFamily(windows.AF_INET, routes); err != nil {
 		return fmt.Errorf("маршруты: %w", err)
 	}
+	if err := t.luid.SetIPAddressesForFamily(windows.AF_INET, addresses); err != nil {
+		return fmt.Errorf("адрес адаптера: %w", err)
+	}
 
 	iface, err := t.luid.IPInterface(windows.AF_INET)
 	if err != nil {
 		return err
 	}
+	iface.RouterDiscoveryBehavior = winipcfg.RouterDiscoveryDisabled
+	iface.DadTransmits = 0
+	iface.ManagedAddressConfigurationSupported = false
+	iface.OtherStatefulConfigurationSupported = false
 	iface.UseAutomaticMetric = false
 	iface.Metric = 0
 	iface.NLMTU = uint32(opts.Config.MTU)
@@ -135,7 +142,27 @@ func (t *Tunnel) configureInterface(opts Options) error {
 	if err := t.luid.SetDNS(windows.AF_INET, opts.Config.DNS, nil); err != nil {
 		return fmt.Errorf("DNS: %w", err)
 	}
+	for _, prefix := range addresses {
+		if row, err := t.luid.IPAddress(prefix.Addr()); err == nil {
+			log.Printf("[VPN] Адрес адаптера %s, состояние %s", prefix, dadStateName(row.DadState))
+		}
+	}
 	return nil
+}
+
+func dadStateName(state winipcfg.DadState) string {
+	switch state {
+	case winipcfg.DadStatePreferred:
+		return "рабочее"
+	case winipcfg.DadStateTentative:
+		return "проверяется (пакеты не принимаются)"
+	case winipcfg.DadStateDuplicate:
+		return "конфликт адресов"
+	case winipcfg.DadStateDeprecated:
+		return "устаревшее"
+	default:
+		return "недействительное"
+	}
 }
 
 func (t *Tunnel) PeerStats() (PeerStats, error) {
