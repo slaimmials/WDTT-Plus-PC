@@ -6,6 +6,7 @@
   import type { AdminClient, AdminServerInfo, Server } from '../lib/types';
   import ServerBackups from './ServerBackups.svelte';
   import ServerClients from './ServerClients.svelte';
+  import ServerDiagnostics from './ServerDiagnostics.svelte';
   import ServerEditor from './ServerEditor.svelte';
   import ServerInfo from './ServerInfo.svelte';
   import ServerInstall from './ServerInstall.svelte';
@@ -21,6 +22,7 @@
   let selectedId = $state(store.settings.servers[0]?.id ?? '');
   let tab = $state<Tab>('clients');
   let editing = $state<Server | null>(null);
+  let diagnosing = $state<Server | null>(null);
   let loading = $state(false);
   let loadError = $state('');
   let info = $state<AdminServerInfo | null>(null);
@@ -78,6 +80,7 @@
           {#if tab === 'clients' || tab === 'server'}
             <button class="ghost" onclick={load} disabled={loading}>Обновить</button>
           {/if}
+          <button class="ghost" onclick={() => (diagnosing = selected)}>Диагностика</button>
           <button class="ghost" onclick={() => (editing = selected)}>Параметры</button>
           <button class="ghost danger" onclick={() => remove(selected)}>Удалить</button>
         </div>
@@ -116,6 +119,10 @@
     {/if}
   </section>
 </div>
+
+{#if diagnosing}
+  <ServerDiagnostics server={diagnosing} onclose={() => (diagnosing = null)} />
+{/if}
 
 {#if editing}
   <ServerEditor

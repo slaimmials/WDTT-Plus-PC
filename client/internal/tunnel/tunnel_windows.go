@@ -138,6 +138,14 @@ func (t *Tunnel) configureInterface(opts Options) error {
 	return nil
 }
 
+func (t *Tunnel) PeerStats() (PeerStats, error) {
+	uapi, err := t.device.IpcGet()
+	if err != nil {
+		return PeerStats{}, err
+	}
+	return parsePeerStats(uapi), nil
+}
+
 func (t *Tunnel) Close() {
 	if t.firewall {
 		firewall.DisableFirewall()

@@ -29,6 +29,8 @@ type Tunnel struct{ Warning string }
 
 func Start(Options) (*Tunnel, error) { return nil, errUnsupported }
 
+func (*Tunnel) PeerStats() (PeerStats, error) { return PeerStats{}, errUnsupported }
+
 func (*Tunnel) Close() {}
 
 func IsElevated() bool { return false }

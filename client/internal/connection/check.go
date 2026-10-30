@@ -13,6 +13,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"wdtt-plus/client/internal/tunnel"
 )
 
 // InternetCheck is the result of a request made through the tunnel right
@@ -30,9 +32,14 @@ const (
 )
 
 // checkInternet fetches Cloudflare's trace page through the tunnel: first by
-// IP to test the path itself, then by domain name to test DNS.
-func (m *Manager) checkInternet(client *http.Client) {
+// IP to test the path itself, then by domain name to test DNS. peerStats, if
+// set, reads WireGuard counters to tell where a failed request was lost.
+func (m *Manager) checkInternet(client *http.Client, peerStats func() (tunnel.PeerStats, error)) {
 	m.update(func(s *Status) { s.Internet = InternetCheck{State: "checking"} })
+	var before tunnel.PeerStats
+	if peerStats != nil {
+		before, _ = peerStats()
+	}
 
 	var ip, country string
 	var err error
@@ -50,9 +57,14 @@ func (m *Manager) checkInternet(client *http.Client) {
 	}
 	if err != nil {
 		log.Printf("[ПРОВЕРКА] Через туннель нет доступа в интернет: %v", err)
-		m.update(func(s *Status) {
-			s.Internet = InternetCheck{State: "failed", Message: "нет доступа в интернет через сервер: " + shortError(err)}
-		})
+		message := "нет доступа в интернет через сервер: " + shortError(err)
+		if peerStats != nil {
+			if after, statsErr := peerStats(); statsErr == nil {
+				message = diagnoseLoss(before, after)
+			}
+		}
+		log.Printf("[ПРОВЕРКА] %s", message)
+		m.update(func(s *Status) { s.Internet = InternetCheck{State: "failed", Message: message} })
 		return
 	}
 	check := InternetCheck{State: "ok", IP: ip, Country: country}
@@ -64,6 +76,24 @@ func (m *Manager) checkInternet(client *http.Client) {
 		log.Printf("[ПРОВЕРКА] Интернет через туннель работает, внешний IP %s (%s)", ip, country)
 	}
 	m.update(func(s *Status) { s.Internet = check })
+}
+
+// diagnoseLoss compares WireGuard counters taken around a failed request.
+func diagnoseLoss(before, after tunnel.PeerStats) string {
+	sent := after.TxBytes - before.TxBytes
+	received := after.RxBytes - before.RxBytes
+	counters := fmt.Sprintf("WireGuard отправил %d Б, получил %d Б", sent, received)
+	if !after.LastHandshake.IsZero() {
+		counters += fmt.Sprintf(", рукопожатие %d с назад", int(time.Since(after.LastHandshake).Seconds()))
+	}
+	switch {
+	case sent == 0:
+		return "трафик Windows не попадает в туннель (" + counters + ")"
+	case received < 256:
+		return "сервер не отвечает на трафик — проверьте его: «Серверы» → «Диагностика» (" + counters + ")"
+	default:
+		return "ответы от сервера приходят, но не доходят до программ Windows (" + counters + ")"
+	}
 }
 
 func fetchTrace(client *http.Client, target string) (ip, country string, err error) {

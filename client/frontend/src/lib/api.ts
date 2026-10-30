@@ -37,6 +37,7 @@ export const api = {
   deleteServer: (id: string): Promise<void> => go.DeleteServer(id),
   admin: (serverId: string, ...args: string[]): Promise<AdminResponse> => go.AdminCall(serverId, args),
   restartServer: (id: string): Promise<void> => go.RestartServer(id),
+  diagnoseServer: (id: string): Promise<string> => go.DiagnoseServer(id),
   deployServer: (id: string, mode: 'install' | 'reset'): Promise<void> => go.DeployServer(id, mode),
   uninstallServer: (id: string): Promise<void> => go.UninstallServer(id),
   clientLink: (serverId: string, password: string, hash: string, name: string): Promise<string> =>
