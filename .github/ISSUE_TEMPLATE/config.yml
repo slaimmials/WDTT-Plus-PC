@@ -1,11 +1,8 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Скачать последний релиз
-    url: https://github.com/Ivan4537/WDTT-Plus/releases/latest
-    about: Актуальная опубликованная версия и APK для разных архитектур.
-  - name: Описание и настройка WDTT Plus
-    url: https://github.com/Ivan4537/WDTT-Plus#readme
-    about: Возможности приложения и инструкции для самостоятельной настройки.
+  - name: Последний выпуск
+    url: https://github.com/slaimmials/WDTT-Plus-PC/releases/latest
+    about: Готовая сборка для Windows.
   - name: Оригинальный проект WDTT
     url: https://github.com/amurcanov/proxy-turn-vk-android
-    about: WDTT Plus является форком оригинального проекта.
+    about: WDTT Plus основан на этом проекте.
