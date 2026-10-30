@@ -8,11 +8,11 @@ require (
 	github.com/bogdanfinn/tls-client v1.15.1
 	github.com/cbeuw/connutil v1.0.1
 	github.com/google/uuid v1.6.0
-	github.com/jchv/go-webview2 v0.0.0-20260205173254-56598839c808
 	github.com/pion/dtls/v3 v3.1.5
 	github.com/pion/logging v0.2.4
 	github.com/pion/turn/v5 v5.0.13
 	github.com/quic-go/quic-go v0.60.0
+	github.com/wailsapp/go-webview2 v1.0.22
 	github.com/wailsapp/wails/v2 v2.17.0
 	github.com/yosida95/uritemplate/v3 v3.0.2
 	go4.org/netipx v0.0.0-20260823151212-3075585bcbeb
@@ -62,7 +62,6 @@ require (
 	github.com/tkrajina/go-reflector v0.5.8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
-	github.com/wailsapp/go-webview2 v1.0.22 // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
 	golang.org/x/text v0.41.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect

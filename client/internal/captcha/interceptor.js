@@ -4,7 +4,7 @@
 
   function report(data) {
     var token = data && data.response && data.response.success_token;
-    if (token) window.wdttCaptchaSolved(token);
+    if (token) window.chrome.webview.postMessage('wdtt-captcha:' + token);
   }
 
   function isCheck(url) {
