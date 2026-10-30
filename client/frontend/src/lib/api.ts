@@ -1,7 +1,7 @@
 import * as App from './wailsjs/go/main/App';
 import { EventsOn, ClipboardSetText, ClipboardGetText } from './wailsjs/runtime/runtime';
 import type {
-  AdminResponse, AppState, HashCheckResult, LogEntry, Profile, Routing, Server, Settings, Status, VK,
+  AdminResponse, AppState, HashCheckResult, LogEntry, PingResult, Profile, Routing, Server, Settings, Status, VK,
 } from './types';
 
 // The generated bindings use model classes; the UI works with plain objects
@@ -22,6 +22,7 @@ export const api = {
   connect: (id: string): Promise<void> => go.Connect(id),
   disconnect: (): Promise<void> => go.Disconnect(),
   checkHashes: (hashes: string[]): Promise<void> => go.CheckHashes(hashes),
+  pingProfiles: (ids: string[]): Promise<void> => go.PingProfiles(ids),
 
   saveRouting: (r: Routing): Promise<void> => go.SaveRouting(r),
   validateRule: (rule: string): Promise<string> => go.ValidateRule(rule),
@@ -55,6 +56,7 @@ export const events = {
   link: (fn: (link: string) => void) => EventsOn('link', fn),
   hashCheck: (fn: (e: { index?: number; result?: HashCheckResult; error?: string; done?: boolean }) => void) =>
     EventsOn('hash-check', fn),
+  ping: (fn: (e: { profileId: string } & PingResult) => void) => EventsOn('ping', fn),
   deploy: (fn: (e: { serverId: string; progress?: number; step?: string; done?: boolean; error?: string }) => void) =>
     EventsOn('deploy', fn),
 };

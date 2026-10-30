@@ -72,6 +72,7 @@ export namespace core {
 	    ActiveConnections: number;
 	    BytesUp: number;
 	    BytesDown: number;
+	    LatencyMs: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Stats(source);
@@ -82,6 +83,7 @@ export namespace core {
 	        this.ActiveConnections = source["ActiveConnections"];
 	        this.BytesUp = source["BytesUp"];
 	        this.BytesDown = source["BytesDown"];
+	        this.LatencyMs = source["LatencyMs"];
 	    }
 	}
 

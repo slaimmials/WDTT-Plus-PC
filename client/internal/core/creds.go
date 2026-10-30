@@ -67,24 +67,35 @@ func SetActiveClientIds(ids string) {
 	}
 }
 
-func SetCustomVKCredentials(clientID, clientSecret string) error {
+// ValidateCustomVKCredentials accepts either both fields empty (use the
+// built-in client IDs) or a numeric client ID with its secret.
+func ValidateCustomVKCredentials(clientID, clientSecret string) error {
 	clientID = strings.TrimSpace(clientID)
-	if clientID == "" || len(clientID) > 20 {
-		return errors.New("client ID must contain 1 to 20 digits")
+	clientSecret = strings.TrimSpace(clientSecret)
+	if clientID == "" && clientSecret == "" {
+		return nil
 	}
-	for _, char := range clientID {
-		if char < '0' || char > '9' {
-			return errors.New("client ID must contain digits only")
-		}
+	if clientID == "" || len(clientID) > 20 || strings.Trim(clientID, "0123456789") != "" {
+		return errors.New("свой Client ID должен состоять из 1–20 цифр")
 	}
-	if strings.TrimSpace(clientSecret) == "" {
-		return errors.New("client secret is empty")
+	if clientSecret == "" {
+		return errors.New("для своего Client ID нужен Client Secret")
 	}
-	credentials := VKCredentials{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
+	return nil
+}
+
+// SetCustomVKCredentials adds the user's own VK app to the legacy credential
+// chain; empty values remove it.
+func SetCustomVKCredentials(clientID, clientSecret string) error {
+	if err := ValidateCustomVKCredentials(clientID, clientSecret); err != nil {
+		return err
 	}
-	customVKCredentials = &credentials
+	clientID = strings.TrimSpace(clientID)
+	if clientID == "" {
+		customVKCredentials = nil
+		return nil
+	}
+	customVKCredentials = &VKCredentials{ClientID: clientID, ClientSecret: strings.TrimSpace(clientSecret)}
 	return nil
 }
 

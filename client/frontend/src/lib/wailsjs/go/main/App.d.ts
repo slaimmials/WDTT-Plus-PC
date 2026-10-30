@@ -32,6 +32,8 @@ export function OpenDataFolder():Promise<void>;
 
 export function ParseLink(arg1:string):Promise<profile.Profile>;
 
+export function PingProfiles(arg1:Array<string>):Promise<void>;
+
 export function ProfileLink(arg1:string):Promise<string>;
 
 export function ReadTextFile():Promise<string>;
